@@ -50,7 +50,14 @@ class Environment:
     def datapath(self):
         """Return the lhapdf datapath, don't populate until first used"""
         if self._datapath is None:
-            self._datapath = configuration.lhapdf_datapath()
+            try:
+                self._datapath = configuration.lhapdf_datapath()
+            except FileNotFoundError as exc:
+                logger.error(
+                    "Data directory for LHAPDF not found, you can use the "
+                    "LHAPDF_DATA_PATH environ variable"
+                )
+                raise exc
         return self._datapath
 
     @datapath.setter

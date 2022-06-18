@@ -5,12 +5,9 @@
     It exposes an object (environment) that should contain
     all relevant external information
 """
-import logging
 import os
 import pathlib
 import sys
-
-_logger = logging.getLogger(__name__)
 
 
 def lhapdf_datapath():
@@ -41,13 +38,11 @@ def lhapdf_datapath():
             if (lhapdf_path / "lhapdf").is_dir():
                 return lhapdf_path / "lhapdf"
             return lhapdf_path
+
     # Ok, now we have an actual problem, try asking some old school lhapdf installation...
     try:
         import lhapdf
 
         return pathlib.Path(lhapdf.paths()[0])
     except ImportError as e:
-        _logger.error(
-            "Data directory for LHAPDF not found, you can use the LHAPDF_DATA_PATH environ variable"
-        )
         raise FileNotFoundError("No data directory for LHAPDF found") from e
