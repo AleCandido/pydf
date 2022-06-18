@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """PDF data structure."""
 from typing import Optional
 
@@ -20,7 +21,8 @@ class PDF:
         flavors: npt.NDArray[np.int_],
         xgrid: npt.NDArray[np.float_],
         q2grid: npt.NDArray[np.float_],
-        alphas: Optional[npt.NDArray[np.float_]],
+        alphas: Optional[npt.NDArray[np.float_]] = None,
+        info: Optional[dict] = None,
     ):
         """Fully initialize PDF instance.
 
@@ -46,8 +48,15 @@ class PDF:
                 member=np.arange(grid.shape[0]), flavor=flavors, x=xgrid, Q2=q2grid
             ),
         )
-        alphas_ = xr.DataArray(alphas, coords=dict(Q2=q2grid))
-        self.data = xr.Dataset(dict(pdf=pdf, alphas=alphas_))
+        if alphas is not None:
+            alphas_ = xr.DataArray(alphas, coords=dict(Q2=q2grid))
+        else:
+            alphas_ = xr.DataArray()
+
+        if info is None:
+            info = {}
+
+        self.data = xr.Dataset(dict(pdf=pdf, alphas=alphas_), attrs=info)
 
 
 class PDFMember:
@@ -58,4 +67,12 @@ class PDFMember:
     """
 
     def __init__(self, grid: npt.NDArray[np.float_]):
+        """Initialize single PDF member.
+
+        Parameters
+        ----------
+        gris: np.ndarray
+            PDF member values
+
+        """
         pass
