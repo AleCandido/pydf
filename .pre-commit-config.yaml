@@ -1,8 +1,6 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.3.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -12,7 +10,7 @@ repos:
       - id: debug-statements
       - id: fix-encoding-pragma
   - repo: https://github.com/psf/black
-    rev: 22.1.0
+    rev: 22.3.0
     hooks:
       - id: black
   - repo: https://github.com/asottile/blacken-docs
@@ -25,6 +23,13 @@ repos:
       - id: isort
         args: ["--profile", "black"]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.31.0
+    rev: v2.34.0
     hooks:
       - id: pyupgrade
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.1.1
+    hooks:
+      - id: pydocstyle
+        files: ^src/
+        additional_dependencies:
+          - toml
