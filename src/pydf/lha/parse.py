@@ -9,13 +9,12 @@ import warnings
 from collections.abc import Sequence
 from typing import Optional, Union
 
-import numpy as np
-import numpy.typing as npt
 import pandas as pd
 import yaml
 
-from ..pdf import PDF
+from .. import pdf
 from . import path
+from . import pdf as lha_pdf
 
 
 @functools.cache
@@ -80,15 +79,20 @@ def member_type(
     return "member"
 
 
-def member_block(
-    content: str,
-) -> tuple[
-    npt.NDArray[np.float_],
-    npt.NDArray[np.float_],
-    npt.NDArray[np.int_],
-    npt.NDArray[np.float_],
-]:
-    """Parse block of a PDF member."""
+def member_block(content: str) -> lha_pdf.Block:
+    """Parse block of a PDF member.
+
+    Parameters
+    ----------
+    content: str
+        text contained in the file block
+
+    Returns
+    -------
+    Block
+        the parsed content of the block
+
+    """
     xtext, qtext, fltext, valtext = content.strip().split("\n", maxsplit=3)
 
     xgrid = pd.read_csv(
@@ -110,14 +114,14 @@ def member_block(
 
 
 class MemberSkip(Exception):
-    """Skip member element."""
+    """Skip member element, because not requested by the user."""
 
 
 def member(
     path: os.PathLike,
     errortype: Optional[str] = None,
     filter: Optional[Union[range, Sequence]] = None,
-) -> tuple[dict, list[np.ndarray]]:
+) -> lha_pdf.PDFMember:
     """Parse PDF member file.
 
     Parameters
@@ -135,7 +139,7 @@ def member(
     dict
         header keys, as specified in the file, or reconstructed (only for
         PdfType)
-    np.ndarray
+    list of Block
         array of PDF values
 
     """
@@ -167,14 +171,14 @@ def member(
     # parse following parts, one at a time
     blocks = []
     for block in parts[1:]:
-        xgrid, qgrid, flavors, grid = member_block(block)
+        blocks.append(member_block(block))
 
-        blocks.append(grid)
-
-    return header, [np.array([])]
+    return lha_pdf.PDFMember.from_blocks(blocks, header=header)
 
 
-def parse(setname: str, filter: Optional[Union[range, slice, Sequence]] = None) -> PDF:
+def parse(
+    setname: str, filter: Optional[Union[range, slice, Sequence]] = None
+) -> pdf.PDF:
     """Parse PDF in LHA format."""
     pdfdir = path.locate(setname)
 
@@ -188,8 +192,7 @@ def parse(setname: str, filter: Optional[Union[range, slice, Sequence]] = None) 
     unidentified = []
     for memberpath in sorted(pdfdir.glob(f"{setname}_*.dat")):
         try:
-            head, patches = member(memberpath, filter=filter)
-            members.append(patches)
+            members.append(member(memberpath, filter=filter))
         except ValueError as verr:
             if not any(
                 marker in verr.args[0] for marker in ["0000", "name convention"]
@@ -199,5 +202,5 @@ def parse(setname: str, filter: Optional[Union[range, slice, Sequence]] = None) 
         except MemberSkip:
             pass
 
-    return ""
-    #  return PDF(np.array([]), np.array([]), np.array([]), np.array([]), info=info)
+    lhaset = lha_pdf.PDF(members, info)
+    return lhaset.upgrade()

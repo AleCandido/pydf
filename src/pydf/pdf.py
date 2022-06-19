@@ -58,6 +58,10 @@ class PDF:
 
         self.data = xr.Dataset(dict(pdf=pdf, alphas=alphas_), attrs=info)
 
+    @classmethod
+    def from_lha(cls):
+        """Create instance from LHA mimicing object."""
+
 
 class PDFMember:
     """Single member of a PDF set.
