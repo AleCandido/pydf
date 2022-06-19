@@ -14,6 +14,19 @@ from . import path
 
 @functools.cache
 def member_filename(setname: str) -> re.Pattern:
+    """Generate pattern for member file names.
+
+    Parameters
+    ----------
+    setname: str
+        name of the PDF set (i.e. name of the PDF containing folder)
+
+    Returns
+    -------
+    re.Pattern
+        compiled pattern
+
+    """
     return re.compile(rf"{setname}_(\d{{4}}).dat")
 
 
