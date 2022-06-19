@@ -1,8 +1,3 @@
-.. pydf documentation master file, created by
-   sphinx-quickstart on Sun Jun 19 10:11:38 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to pydf's documentation!
 ================================
 
@@ -15,6 +10,9 @@ Welcome to pydf's documentation!
   source of unexpected behavior
 
   - it might be provided at a later stage, but it will never be the default
+  - while the ``error`` extrapolator was present, here a different behavior will
+    be implemented: in order to support array queries, `np.nan` will be returned
+    for points lying outside the boundaries
 
 - no implementor flexibility: LHAPDF has been used for many years, but the only
   interface I've seen used is `GridPDF`
