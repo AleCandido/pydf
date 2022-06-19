@@ -102,8 +102,13 @@ def locate(setname: str) -> pathlib.Path:
     raise FileNotFoundError(f"No PDF set '{setname}' available in LHAPDF path.")
 
 
-def config() -> pathlib.Path:
-    """Locate global configuration file.
+def global_resource(filename: str) -> pathlib.Path:
+    """Locate global resource file.
+
+    Parameters
+    ----------
+    filename: str
+        the expected file name to be retrieved (including extension)
 
     Returns
     -------
@@ -119,10 +124,36 @@ def config() -> pathlib.Path:
     lhapath = lhapdf_datapath()
 
     for path in lhapath:
-        configpath = path / "lhapdf.conf"
+        configpath = path / filename
         if configpath.is_file():
             return configpath
 
     raise FileNotFoundError(
-        "No global configuration file 'lhapdf.conf' found in LHAPDF path."
+        f"No global configuration file '{filename}' found in LHAPDF path."
     )
+
+
+CONFIGURATION = "lhapdf.conf"
+
+
+def config() -> pathlib.Path:
+    """Locate global config file.
+
+    Specialization of `global_resource` for configuration file (whose name is stored in
+    `CONFIGURATION` variable).
+
+    """
+    return global_resource(CONFIGURATION)
+
+
+INDEX = "lhapdf.conf"
+
+
+def index() -> pathlib.Path:
+    """Locate global PDF index file.
+
+    Specialization of `global_resource` for index file (whose name is stored in
+    `INDEX` variable).
+
+    """
+    return global_resource(INDEX)
