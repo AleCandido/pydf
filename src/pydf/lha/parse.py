@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Read LHA format."""
 import functools
+import os
 import pathlib
 import re
 import warnings
@@ -76,9 +77,29 @@ def member_type(
 
 
 def member(
-    path: pathlib.Path, errortype: Optional[str] = None
+    path: os.PathLike, errortype: Optional[str] = None
 ) -> tuple[dict, list[np.ndarray]]:
-    """Parse PDF member file."""
+    """Parse PDF member file.
+
+    Parameters
+    ----------
+    path: os.PathLike
+        path to the member file
+    errortype: str or None
+        the set type (usually ``hessian`` or ``replicas``) as specified by the
+        set metadata
+
+    Returns
+    -------
+    dict
+        header keys, as specified in the file, or reconstructed (only for
+        PdfType)
+    np.ndarray
+        array of PDF values
+
+    """
+    path = pathlib.Path(path)
+
     matched = re.fullmatch(member_filename(path.parent.name), path.name)
     if matched is None:
         raise ValueError(f"File '{path.name}' does not match members name convention")
@@ -98,7 +119,7 @@ def member(
             "arXiv:1412.7420v2 sec. 5.2)"
         )
     else:
-        parts.pop()
+        parts.pop
 
     # parse following parts, one at a time
     for patch in parts[1:]:
