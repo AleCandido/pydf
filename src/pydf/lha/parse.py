@@ -3,6 +3,7 @@
 import functools
 import pathlib
 import re
+import warnings
 from typing import Optional
 
 import numpy as np
@@ -85,8 +86,21 @@ def member(
     content = path.read_text(encoding="utf-8")
     parts = content.split("---")
 
+    # parse header
     header = yaml.safe_load(parts[0])
     header["PdfType"] = member_type(matched[1], header.get("PdfType"), errortype)
+
+    if parts[-1].strip() != "":
+        warnings.warn(
+            f"Member '{matched[1]}' does not end by '---', nevertheless "
+            "the block after last '---' is being considered as a regular one "
+            "(the specs clearly states nothing else should be there, "
+            "arXiv:1412.7420v2 sec. 5.2)"
+        )
+    else:
+        parts.pop()
+
+    # parse following parts, one at a time
     for patch in parts[1:]:
         __import__("pdb").set_trace()
         pass
