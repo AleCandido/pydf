@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 """Read LHA format."""
 import functools
+import io
 import os
 import pathlib
 import re
 import warnings
-from typing import Optional
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import numpy as np
+import numpy.typing as npt
+import pandas as pd
 import yaml
 
 from ..pdf import PDF
@@ -76,8 +80,33 @@ def member_type(
     return "member"
 
 
+def member_block(
+    content: str,
+) -> tuple[
+    npt.NDArray[np.float_],
+    npt.NDArray[np.float_],
+    npt.NDArray[np.int_],
+    npt.NDArray[np.float_],
+]:
+    """Parse block of a PDF member."""
+    xtext, qtext, fltext, valtext = content.strip().split("\n", maxsplit=3)
+
+    xgrid = pd.read_csv(io.StringIO(xtext.replace(" ", "\n")), sep=" ").values[:, 0]
+    qgrid = pd.read_csv(io.StringIO(qtext.replace(" ", "\n")), sep=" ").values[:, 0]
+    flavors = pd.read_csv(io.StringIO(fltext.replace(" ", "\n")), sep=" ").values[:, 0]
+    values = pd.read_csv(io.StringIO(fltext + "\n" + valtext), sep=" ").values
+
+    return xgrid, qgrid, flavors, values
+
+
+class MemberSkip(Exception):
+    """Skip member element."""
+
+
 def member(
-    path: os.PathLike, errortype: Optional[str] = None
+    path: os.PathLike,
+    errortype: Optional[str] = None,
+    filter: Optional[Union[range, Sequence]] = None,
 ) -> tuple[dict, list[np.ndarray]]:
     """Parse PDF member file.
 
@@ -88,6 +117,8 @@ def member(
     errortype: str or None
         the set type (usually ``hessian`` or ``replicas``) as specified by the
         set metadata
+    filter: range or Sequence
+        restrict which elements should be loaded
 
     Returns
     -------
@@ -103,6 +134,8 @@ def member(
     matched = re.fullmatch(member_filename(path.parent.name), path.name)
     if matched is None:
         raise ValueError(f"File '{path.name}' does not match members name convention")
+    if filter is not None and matched[1] not in filter:
+        raise MemberSkip(matched[1])
 
     content = path.read_text(encoding="utf-8")
     parts = content.split("---")
@@ -119,17 +152,19 @@ def member(
             "arXiv:1412.7420v2 sec. 5.2)"
         )
     else:
-        parts.pop
+        parts.pop()
 
     # parse following parts, one at a time
-    for patch in parts[1:]:
-        __import__("pdb").set_trace()
-        pass
+    blocks = []
+    for block in parts[1:]:
+        xgrid, qgrid, flavors, grid = member_block(block)
+
+        blocks.append(grid)
 
     return header, [np.array([])]
 
 
-def parse(setname: str) -> PDF:
+def parse(setname: str, filter: Optional[Union[range, Sequence]] = None) -> PDF:
     """Parse PDF in LHA format."""
     pdfdir = path.locate(setname)
 
@@ -139,11 +174,17 @@ def parse(setname: str) -> PDF:
     members = []
     unidentified = []
     for memberpath in sorted(pdfdir.glob(f"{setname}_*.dat")):
-        print(memberpath)
         try:
-            head, patches = member(memberpath)
+            head, patches = member(memberpath, filter=filter)
             members.append(patches)
         except ValueError as verr:
+            if not any(
+                marker in verr.args[0] for marker in ["0000", "name convention"]
+            ):
+                raise verr
             unidentified.append((memberpath, verr.args[0]))
+        except MemberSkip:
+            pass
 
-    return PDF(np.array([]), np.array([]), np.array([]), np.array([]), info=info)
+    return ""
+    #  return PDF(np.array([]), np.array([]), np.array([]), np.array([]), info=info)
