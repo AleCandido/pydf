@@ -91,10 +91,18 @@ def member_block(
     """Parse block of a PDF member."""
     xtext, qtext, fltext, valtext = content.strip().split("\n", maxsplit=3)
 
-    xgrid = pd.read_csv(io.StringIO(xtext.replace(" ", "\n")), sep=" ").values[:, 0]
-    qgrid = pd.read_csv(io.StringIO(qtext.replace(" ", "\n")), sep=" ").values[:, 0]
-    flavors = pd.read_csv(io.StringIO(fltext.replace(" ", "\n")), sep=" ").values[:, 0]
+    xgrid = pd.read_csv(
+        io.StringIO(xtext.replace(" ", "\n")), sep=" ", names=["value"]
+    ).values[:, 0]
+    qgrid = pd.read_csv(
+        io.StringIO(qtext.replace(" ", "\n")), sep=" ", names=["value"]
+    ).values[:, 0]
+    flavors = pd.read_csv(
+        io.StringIO(fltext.replace(" ", "\n")), sep=" ", names=["value"]
+    ).values[:, 0]
     values = pd.read_csv(io.StringIO(fltext + "\n" + valtext), sep=" ").values
+
+    values = values.reshape(xgrid.size, qgrid.size, flavors.size)
 
     return xgrid, qgrid, flavors, values
 
@@ -164,12 +172,15 @@ def member(
     return header, [np.array([])]
 
 
-def parse(setname: str, filter: Optional[Union[range, Sequence]] = None) -> PDF:
+def parse(setname: str, filter: Optional[Union[range, slice, Sequence]] = None) -> PDF:
     """Parse PDF in LHA format."""
     pdfdir = path.locate(setname)
 
     infopath = pdfdir / f"{setname}.info"
     info = yaml.safe_load(infopath.read_text(encoding="utf-8"))
+
+    if isinstance(filter, slice):
+        filter = range(*filter.indices(filter.stop))
 
     members = []
     unidentified = []
