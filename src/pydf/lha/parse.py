@@ -100,7 +100,9 @@ def member_block(
     flavors = pd.read_csv(
         io.StringIO(fltext.replace(" ", "\n")), sep=" ", names=["value"]
     ).values[:, 0]
-    values = pd.read_csv(io.StringIO(fltext + "\n" + valtext), sep=" ").values
+    values = pd.read_csv(
+        io.StringIO(fltext + "\n" + valtext), delim_whitespace=True
+    ).values
 
     values = values.reshape(xgrid.size, qgrid.size, flavors.size)
 
