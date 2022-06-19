@@ -100,3 +100,29 @@ def locate(setname: str) -> pathlib.Path:
             return pdfdir
 
     raise FileNotFoundError(f"No PDF set '{setname}' available in LHAPDF path.")
+
+
+def config() -> pathlib.Path:
+    """Locate global configuration file.
+
+    Returns
+    -------
+    pathlib.Path
+        the location retrieved
+
+    Raises
+    ------
+    FileNotFoundError
+        if location is not identified
+
+    """
+    lhapath = lhapdf_datapath()
+
+    for path in lhapath:
+        configpath = path / "lhapdf.conf"
+        if configpath.is_file():
+            return configpath
+
+    raise FileNotFoundError(
+        "No global configuration file 'lhapdf.conf' found in LHAPDF path."
+    )
