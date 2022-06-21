@@ -1,10 +1,47 @@
 # -*- coding: utf-8 -*-
 """PDF data structure."""
-from typing import Optional
+import pathlib
+from typing import Optional, Sequence
 
 import numpy as np
 import numpy.typing as npt
 import xarray as xr
+
+Block = tuple[
+    npt.NDArray[np.float_],
+    npt.NDArray[np.float_],
+    npt.NDArray[np.int_],
+    npt.NDArray[np.float_],
+]
+"""A 4-tuple describing the content of a file block.
+
+In particular the tuple contain:
+
+    - xgrid: the coordinates grid in the PDF momentum fraction
+    - qgrid: the coordinates grid in the PDF factorization scale
+    - flavors: the PDF ID of included partons
+    - values: the PDF values in the given block
+
+"""
+
+
+class Member:
+    """Single member of a PDF set.
+
+    It might be either a Monte Carlo replica or an Hessian eigenvector.
+
+    """
+
+    def __init__(self, blocks: Sequence[Block], info: Optional[dict] = None):
+        """Initialize single PDF member.
+
+        Parameters
+        ----------
+        gris: np.ndarray
+            PDF member values
+
+        """
+        pass
 
 
 class PDF:
@@ -63,20 +100,17 @@ class PDF:
         """Create instance from LHA mimicing object."""
 
 
-class PDFMember:
-    """Single member of a PDF set.
+class Homogeneous(PDF):
+    pass
 
-    It might be either a Monte Carlo replica or an Hessian eigenvector.
 
-    """
+class Inhomogeneous(PDF):
+    pass
 
-    def __init__(self, grid: npt.NDArray[np.float_]):
-        """Initialize single PDF member.
 
-        Parameters
-        ----------
-        gris: np.ndarray
-            PDF member values
+def create(info: dict, members: Sequence[Member]) -> PDF:
+    return PDF()
 
-        """
-        pass
+
+def read(path: pathlib.Path) -> PDF:
+    return PDF()

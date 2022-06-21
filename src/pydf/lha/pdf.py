@@ -8,44 +8,11 @@ import numpy.typing as npt
 
 from .. import pdf
 
-Block = tuple[
-    npt.NDArray[np.float_],
-    npt.NDArray[np.float_],
-    npt.NDArray[np.int_],
-    npt.NDArray[np.float_],
-]
-"""A 4-tuple describing the content of a file block.
-
-In particular the tuple contain:
-
-    - xgrid: the coordinates grid in the PDF momentum fraction
-    - qgrid: the coordinates grid in the PDF factorization scale
-    - flavors: the PDF ID of included partons
-    - values: the PDF values in the given block
-
-"""
-
 
 class PDFMember:
     """Member of an LHA loaded set."""
 
-    def __init__(
-        self,
-        xgrid: npt.NDArray[np.float_],
-        qgrid: npt.NDArray[np.float_],
-        flavors: npt.NDArray[np.int_],
-        values: npt.NDArray[np.float_],
-        info: Optional[dict] = None,
-    ) -> None:
-        """Initialize a PDF member from arrays."""
-        self.info = info
-        self.xgrid = xgrid
-        self.qgrid = qgrid
-        self.flavors = flavors
-        self.values = values
-
-    @classmethod
-    def from_blocks(cls, blocks: Sequence[Block], header: Optional[dict] = None):
+    def __init__(self, blocks: Sequence[pdf.Block], header: Optional[dict] = None):
         """Build from blocks and header."""
         # TODO: construct a single block representation from multiple ones
         # TODO: maybe? i.e.
@@ -55,7 +22,20 @@ class PDFMember:
         # interpolation should happen only within a single block, so at the
         # least the blocks boundaries should be stored, and used during
         # interpolation
-        return cls(*blocks[0], info=header)
+        self.info = header
+        self.blocks = blocks
+
+    @classmethod
+    def from_block(
+        cls,
+        xgrid: npt.NDArray[np.float_],
+        qgrid: npt.NDArray[np.float_],
+        flavors: npt.NDArray[np.int_],
+        values: npt.NDArray[np.float_],
+        info: Optional[dict] = None,
+    ):
+        """Initialize a PDF member from arrays."""
+        return cls(blocks=[(xgrid, qgrid, flavors, values)], header=info)
 
 
 class PDF:
@@ -84,4 +64,4 @@ class PDF:
             set object, wrapping an `xr.DataSet`
 
         """
-        return pdf.PDF()
+        return pdf.create(self.info, self.members)
